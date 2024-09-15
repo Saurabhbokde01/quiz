@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="quiz-container">
+        <form id="quiz-form">
+            <div id="question-container">
+                <!-- The current question will be displayed here -->
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" id="prev-btn" class="nav-button" onclick="previousQuestion()">Previous</button>
+                <button type="button" id="next-btn" class="nav-button" onclick="nextQuestion()">Next</button>
+                <button type="button" id="submit-btn" class="submit-button hidden" onclick="submitQuiz()">Submit</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const questions = [
+            { question: "What is 2 + 2?", options: ["3", "4", "5", "6"], answer: 1 },
+            { question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: 2 },
+            { question: "Which is a programming language?", options: ["HTML", "Python", "CSS", "XML"], answer: 1 },
+            { question: "What is the result of 5 * 3?", options: ["8", "12", "15", "20"], answer: 2 }
+        ];
+
+        let shuffledQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+
+        // Shuffle the questions before starting the quiz
+        function shuffleQuestions() {
+            shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+            userAnswers = new Array(shuffledQuestions.length).fill(null);
+        }
+
+        // Load the current question into the DOM
+        function loadQuestion() {
+            const questionContainer = document.getElementById('question-container');
+            const currentQuestion = shuffledQuestions[currentQuestionIndex];
+            questionContainer.innerHTML = `
+                <p>${currentQuestionIndex + 1}. ${currentQuestion.question}</p>
+                <div>
+                    ${currentQuestion.options.map((option, i) => `
+                        <label>
+                            <input type="radio" name="q${currentQuestionIndex}" value="${i}" ${userAnswers[currentQuestionIndex] == i ? 'checked' : ''}>
+                            ${option}
+                        </label><br>`).join('')}
+                </div>
+            `;
+
+            updateButtons();
+        }
+
+        // Handle Next question navigation
+        function nextQuestion() {
+            saveAnswer();
+            if (currentQuestionIndex < shuffledQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        // Handle Previous question navigation
+        function previousQuestion() {
+            saveAnswer();
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        // Save the user's answer for the current question
+        function saveAnswer() {
+            const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+            if (selectedOption) {
+                userAnswers[currentQuestionIndex] = parseInt(selectedOption.value);
+            }
+        }
+
+        // Update the visibility of Next, Previous, and Submit buttons
+        function updateButtons() {
+            document.getElementById('prev-btn').style.display = currentQuestionIndex === 0 ? 'none' : 'inline';
+            document.getElementById('next-btn').style.display = currentQuestionIndex === shuffledQuestions.length - 1 ? 'none' : 'inline';
+            document.getElementById('submit-btn').classList.toggle('hidden', currentQuestionIndex !== shuffledQuestions.length - 1);
+        }
+
+        // Submit the quiz and navigate to the result page
+        function submitQuiz() {
+            localStorage.setItem('userAnswers', JSON.stringify(userAnswers));
+            localStorage.setItem('shuffledQuestions', JSON.stringify(shuffledQuestions));
+            window.location.href = 'password.html';
+        }
+
+        // Fullscreen request and exit handler
+        function requestFullScreen() {
+            const element = document.documentElement;
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.mozRequestFullScreen) { // Firefox
+                element.mozRequestFullScreen();
+            } else if (element.webkitRequestFullscreen) { // Chrome, Safari, and Opera
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) { // IE/Edge
+                element.msRequestFullscreen();
+            }
+        }
+
+        // Detect when fullscreen is exited and submit the quiz
+        function exitHandler() {
+            if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+                submitQuiz();
+            }
+        }
+
+        document.addEventListener('fullscreenchange', exitHandler);
+        document.addEventListener('mozfullscreenchange', exitHandler);
+        document.addEventListener('webkitfullscreenchange', exitHandler);
+        document.addEventListener('msfullscreenchange', exitHandler);
+
+        // Start the quiz on page load
+        window.onload = () => {
+            shuffleQuestions();
+            loadQuestion();
+            requestFullScreen(); // Trigger fullscreen when the quiz starts
+        };
+    </script>
+</body>
+</html>
